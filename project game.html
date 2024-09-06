@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2048 Game</title>
+  <style>
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      height: 200px;
+      width: 450px;
+      justify-content: center;
+      align-items: center;
+      background-color: #e493d6;
+      padding: 10px;
+      padding-top: 0;
+    }
+    .game{
+      width: 450px;
+      height: 800px;
+      background-color: #fdfcfb;
+      display: flex;
+      flex-direction: column;
+      padding:30px;
+      gap: 10px;
+      padding-bottom: 50px;
+      align-items: center;
+      justify-content: center;
+
+    }
+
+    body {
+      display: flex;  
+      align-items: center;
+      justify-content: center;  
+      background-color: #ce7ce7;
+      height: 100vh;
+      
+    }
+
+    .name {
+      font-size: 2em;
+      margin-bottom: 20px;
+      align-items: flex-start;
+      justify-content: flex-start;
+      display: flex;
+    }
+
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 5px;
+      background-color: rgb(92, 81, 81);
+      border: 3px solid;
+      padding: 10px;
+      margin-top: 20px;
+    }
+
+    .tile {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #afa9a2;
+      font-size: 2em;
+      font-weight: bold;
+      border-radius: 5px;
+    }
+
+    .scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 10px;
+      gap: 10px;
+      padding-top: 20px;
+    }
+    .scoreboard h1{
+      margin: 0;
+      flex:1;
+    }
+    .scoreboard div{
+      margin-left: 20px;
+    }
+
+    #current-score, #best-score {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgb(159, 218, 172);
+      height: 30px;
+      width: 70px;
+      text-align: center;
+      font-weight: bold;
+      border: 1px solid;
+    
+    }
+    #new-game {
+      margin-bottom: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      background-color: rgb(4, 237, 253);
+      color: rgb(10, 10, 10);
+      border: 1px solid;
+      border-radius: 5px;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 20px;
+      padding-right: 0px;
+      align-items: center;
+    }
+
+    .para {
+      display: flex;
+      justify-content: flex-start;
+      width: 100%;
+      padding: 20px;
+      margin-bottom: 20px;
+      
+    }
+    p{
+      font-weight: 550;
+    }
+
+    a {
+      font-weight: bolder;
+      padding-top: 10px;
+      
+    }
+
+    .tile[data-value="2"]    { background-color: #f1caca; }
+    .tile[data-value="4"]    { background-color: #d3b378; }
+    .tile[data-value="8"]    { background-color: #f5a45e; }
+    .tile[data-value="16"]   { background-color: #fa8a4d; }
+    .tile[data-value="32"]   { background-color: #f86a46; }
+    .tile[data-value="64"]   { background-color: #f33206; }
+    .tile[data-value="128"]  { background-color: #fccf49; }
+    .tile[data-value="256"]  { background-color: #5c4a0e; }
+    .tile[data-value="512"]  { background-color: #110f85; }
+    .tile[data-value="1024"] { background-color: #070500; }
+    .tile[data-value="2048"] { background-color: #75bb0d; }
+  </style>
+</head>
+<body>
+  <div class="game">
+  <section class="game-container">
+    <div class="scoreboard">
+      <h1 class="name">2048 Game</h1>
+      <div>score: <span id="current-score">0</span></div>
+      <div>best score: <span id="best-score">0</span></div>
+    </div>
+    <div class="button-container">
+      <p class="para">Join numbers to get to the 2048 tile!</p>
+      <button id="new-game">New Game</button>
+    </div>
+  </section>
+
+  <div id="game-board" class="grid-cells"></div>
+  <br><br>
+  <a href="#">HOW TO PLAY 2048:</a>
+  <p>Use arrow keys to move the tiles. When two tiles having the same number touch, they join into one!</p>
+</div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const gameBoard = document.getElementById("game-board");
+      const currentScoreDisplay = document.getElementById("current-score");
+      const bestScoreDisplay = document.getElementById("best-score");
+      const newGameButton = document.getElementById("new-game");
+      let tiles = Array(16).fill(0); 
+      let currentScore = 0;
+      let bestScore = parseInt(localStorage.getItem("bestscore")) || 0;
+      bestScoreDisplay.textContent = bestScore;
+
+      function initGame() {
+        currentScore = 0;
+        tiles.fill(0);
+        addRandomTile();
+        addRandomTile();
+        updateBoard();
+        updateScore();
+      }
+
+      function addRandomTile() {
+        let emptyTiles = tiles.map((tile, index) => tile === 0 ? index : -1).filter(index => index !== -1);
+        if (emptyTiles.length === 0) return;
+        let randomIndex = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+        tiles[randomIndex] = Math.random() > 0.1 ? 2 : 4; 
+      }
+
+      function updateBoard() {
+        gameBoard.innerHTML = '';
+        tiles.forEach(value => {
+          const tileElement = document.createElement('div');
+          tileElement.classList.add('tile');
+          tileElement.textContent = value === 0 ? '' : value;
+          tileElement.setAttribute('data-value', value);
+          gameBoard.appendChild(tileElement);
+        });
+      }
+
+      function updateScore() {
+        currentScoreDisplay.textContent = currentScore;
+        if (currentScore > bestScore) {
+          bestScore = currentScore;
+          bestScoreDisplay.textContent = bestScore;
+          localStorage.setItem("bestscore", bestScore);
+        }
+      }
+
+      function moveTiles(direction) {
+        let hasMoved = false;
+
+        for (let i = 0; i < 4; i++) {
+          let rowOrCol = [];
+
+          for (let j = 0; j < 4; j++) {
+            let index;
+            switch (direction) {
+              case 'ArrowUp':
+                index = j * 4 + i;
+                break;
+              case 'ArrowDown':
+                index = (3 - j) * 4 + i;
+                break;
+              case 'ArrowLeft':
+                index = i * 4 + j;
+                break;
+              case 'ArrowRight':
+                index = i * 4 + (3 - j);
+                break;
+            }
+            rowOrCol.push(tiles[index]);
+          }
+
+          let merged = mergeRowOrCol(rowOrCol);
+          merged.forEach((val, j) => {
+            let index;
+            switch (direction) {
+              case 'ArrowUp':
+                index = j * 4 + i;6
+                break;
+              case 'ArrowDown':
+                index = (3 - j) * 4 + i;
+                break;
+              case 'ArrowLeft': 
+                index = i * 4 + j;
+                break;
+              case 'ArrowRight':
+                index = i * 4 + (3 - j);
+                break;
+            }
+
+            if (tiles[index] !== val) {
+              hasMoved = true;
+            }
+
+            tiles[index]=val;
+          });
+        }
+
+        if (hasMoved) {
+          addRandomTile();
+          updateBoard();
+          updateScore();
+          checkGameOver();
+        }
+      }
+
+      function mergeRowOrCol(rowOrCol) {
+        let nonZero = rowOrCol.filter(val => val !== 0);
+        for (let i = 0; i < nonZero.length - 1; i++) {
+          if (nonZero[i] === nonZero[i + 1]) {
+            nonZero[i] *= 2;
+            nonZero[i + 1] = 0;
+            currentScore += nonZero[i]; 
+          }
+        }
+        return [...nonZero.filter(val => val !== 0), ...Array(4 - nonZero.filter(val => val !== 0).length).fill(0)];
+      }
+
+      function checkGameOver() {
+        if (tiles.some(tile => tile === 2048)) {
+          alert("You've reached 2048! You win!");
+          initGame();
+          return;
+        }
+        if (tiles.every(tile => tile !== 0)) {
+          alert("Game Over! Try again");
+          initGame();
+        }
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          moveTiles(e.key);
+        }
+      });
+
+      newGameButton.addEventListener("click", initGame);
+
+      initGame();
+    });
+  </script>
+</body>
+</html>
